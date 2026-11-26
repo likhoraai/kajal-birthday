@@ -39,6 +39,44 @@ button{font-family:inherit;cursor:pointer}
 
 /* ---------- confetti canvas ---------- */
 #confettiCanvas{position:fixed;inset:0;pointer-events:none;z-index:60}
+body.celebrating #confettiCanvas{z-index:400}
+
+/* ---------- pin lock ---------- */
+body.locked{overflow:hidden}
+#pinLock{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(160deg,#40141d 0%,#7b1e2b 52%,#9e2a3a 78%,#e75480 130%);transition:opacity .6s ease,visibility .6s}
+#pinLock.unlocked{opacity:0;visibility:hidden;pointer-events:none}
+.pin-card{position:relative;z-index:2;width:100%;max-width:380px;background:var(--card);border:1px solid var(--line);border-radius:26px;box-shadow:0 30px 70px rgba(0,0,0,.4);padding:30px 26px 26px;text-align:center;animation:pageIn .5s ease both}
+.pin-card.shake{animation:pinShake .45s ease}
+@keyframes pinShake{0%,100%{transform:translateX(0)}18%{transform:translateX(-11px)}38%{transform:translateX(10px)}58%{transform:translateX(-7px)}78%{transform:translateX(5px)}}
+.pin-ico{font-size:54px;line-height:1.1}
+.pin-card .script{font-size:32px;color:var(--pink);margin-top:8px;line-height:1.2}
+.pin-card h2{font-size:26px;color:var(--maroon);margin-top:4px}
+@media (prefers-color-scheme: dark){.pin-card h2{color:var(--gold2)}}
+.pin-card .pin-sub{color:var(--muted);font-weight:600;line-height:1.55;font-size:14.5px;margin:8px auto 0;max-width:300px}
+.pin-dots{display:flex;justify-content:center;gap:14px;margin:22px 0 4px}
+.pin-dots span{width:17px;height:17px;border-radius:50%;border:2.5px solid var(--pink);background:transparent;transition:background .15s,transform .15s}
+.pin-dots span.filled{background:linear-gradient(135deg,var(--maroon),var(--pink));transform:scale(1.12)}
+.pin-error{min-height:22px;color:var(--maroon2);font-weight:700;font-size:14px;margin:4px 0 8px}
+@media (prefers-color-scheme: dark){.pin-error{color:#ff9db4}}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:264px;margin:0 auto}
+.pin-key{border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font-size:22px;font-weight:700;padding:13px 0;border-radius:16px;transition:transform .15s,border-color .15s,background .15s;-webkit-tap-highlight-color:transparent}
+.pin-key:hover{border-color:var(--pink)}
+.pin-key:active{transform:scale(.93);background:var(--pink-soft)}
+.pin-key.fn{font-size:16px;color:var(--muted)}
+.pin-hint{color:var(--muted);font-weight:600;font-size:13px;margin:16px 0 0}
+
+/* ---------- unlock celebration ---------- */
+#celBalloons{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1}
+.cel-floaty{position:absolute;bottom:-80px;animation:rise linear forwards;opacity:0}
+#celebration{display:none;position:relative;z-index:2;text-align:center;color:#fff;padding:20px;max-width:520px}
+#pinLock.celebrating .pin-card{display:none}
+#pinLock.celebrating #celebration{display:block;animation:celIn .7s cubic-bezier(.2,.9,.3,1.4) both}
+@keyframes celIn{0%{transform:scale(.4) rotate(-4deg);opacity:0}60%{transform:scale(1.08) rotate(1deg);opacity:1}100%{transform:scale(1) rotate(0)}}
+.cel-cake{font-size:110px;line-height:1.1;display:inline-block;animation:bob 2.2s ease-in-out infinite}
+.cel-script{font-family:"Great Vibes",cursive;font-size:clamp(34px,7vw,50px);color:#ffd98a;margin-top:8px;line-height:1.2;text-shadow:0 2px 14px rgba(0,0,0,.35)}
+.cel-title{font-family:"Playfair Display",serif;font-size:clamp(42px,10vw,74px);font-weight:800;line-height:1.04;color:#fff;text-shadow:0 4px 26px rgba(0,0,0,.4);margin-top:2px}
+.cel-title .name{background:linear-gradient(90deg,#ffd98a,#ffb3c6,#ffd98a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.cel-sub{font-weight:700;font-size:16px;color:#ffeef2;margin:12px 0 0;text-shadow:0 2px 10px rgba(0,0,0,.35)}
 
 /* ---------- top nav ---------- */
 .topnav{position:sticky;top:0;z-index:50;background:var(--nav-bg);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
@@ -279,9 +317,43 @@ footer .script{font-size:26px;color:var(--pink);display:block;margin-bottom:4px}
 }
 </style>
 </head>
-<body>
+<body class="locked">
 <canvas id="confettiCanvas"></canvas>
 <div id="floatLayer" aria-hidden="true"></div>
+
+<!-- ================= PIN LOCK ================= -->
+<div id="pinLock" role="dialog" aria-modal="true" aria-label="Enter the PIN to open this birthday surprise">
+  <div id="celBalloons" aria-hidden="true"></div>
+  <div class="pin-card" id="pinCard">
+    <div class="pin-ico" id="pinIco">🔒</div>
+    <div class="script">a surprise is waiting for you…</div>
+    <h2>A Surprise for Kajal</h2>
+    <p class="pin-sub">Someone made you a birthday surprise, Kajal — and locked it with a secret PIN. Enter the 4-digit code to open it. 🎂</p>
+    <div class="pin-dots" id="pinDots" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+    <div class="pin-error" id="pinError" aria-live="polite"></div>
+    <div class="pin-pad" id="pinPad">
+      <button type="button" class="pin-key" data-digit="1">1</button>
+      <button type="button" class="pin-key" data-digit="2">2</button>
+      <button type="button" class="pin-key" data-digit="3">3</button>
+      <button type="button" class="pin-key" data-digit="4">4</button>
+      <button type="button" class="pin-key" data-digit="5">5</button>
+      <button type="button" class="pin-key" data-digit="6">6</button>
+      <button type="button" class="pin-key" data-digit="7">7</button>
+      <button type="button" class="pin-key" data-digit="8">8</button>
+      <button type="button" class="pin-key" data-digit="9">9</button>
+      <button type="button" class="pin-key fn" data-action="clear">Clear</button>
+      <button type="button" class="pin-key" data-digit="0">0</button>
+      <button type="button" class="pin-key fn" data-action="back" aria-label="Delete last digit">⌫</button>
+    </div>
+    <p class="pin-hint">Don't know the PIN? Ask Rabindra 💌</p>
+  </div>
+  <div id="celebration" aria-hidden="true">
+    <div class="cel-cake">🎂</div>
+    <div class="cel-script">you did it — the wait is over…</div>
+    <div class="cel-title">Happy Birthday<br /><span class="name">Kajal</span> 🎉</div>
+    <p class="cel-sub">Your surprise is opening — get ready! ✨</p>
+  </div>
+</div>
 
 <header class="topnav">
   <div class="topnav-inner">
@@ -805,6 +877,121 @@ $("#envelope").addEventListener("click", function () {
 
 /* ================= welcome ================= */
 addEventListener("load", () => setTimeout(burstSide, 450));
+</script>
+<script>
+"use strict";
+/* ================= pin lock (PIN: 1435) ================= */
+(function () {
+  var CORRECT_PIN = "1435";
+  var pinLock = document.getElementById("pinLock");
+  if (!pinLock) { document.body.classList.remove("locked"); return; }
+  var pinCard = document.getElementById("pinCard");
+  var pinError = document.getElementById("pinError");
+  var pinDots = document.querySelectorAll("#pinDots span");
+  var enteredPin = "";
+  var pinUnlocked = false;
+  var reduced = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+  function gate(on) {
+    document.querySelectorAll("header.topnav, section.page, footer").forEach(function (el) { el.inert = on; });
+  }
+
+  /* unlocked earlier in this same session? walk straight in */
+  var remembered = false;
+  try { remembered = sessionStorage.getItem("kajalUnlocked") === "1"; } catch (e) {}
+  if (remembered) {
+    pinUnlocked = true;
+    document.body.classList.remove("locked");
+    if (pinLock.parentNode) pinLock.parentNode.removeChild(pinLock);
+    return;
+  }
+  gate(true);
+
+  function renderPinDots() {
+    pinDots.forEach(function (d, i) { d.classList.toggle("filled", i < enteredPin.length); });
+  }
+  function pinFail() {
+    pinCard.classList.remove("shake");
+    void pinCard.offsetWidth;
+    pinCard.classList.add("shake");
+    pinError.textContent = "Oops, wrong code — try again 💛";
+    setTimeout(function () { enteredPin = ""; renderPinDots(); }, 320);
+  }
+  function spawnCelBalloons() {
+    var box = document.getElementById("celBalloons");
+    if (!box || reduced) return;
+    var glyphs = ["💛", "💖", "✨", "🎈"];
+    var colors = ["#e75480", "#e8b84b", "#ff8fab", "#ffd98a", "#ffffff"];
+    for (var i = 0; i < 14; i++) {
+      (function (n) {
+        setTimeout(function () {
+          var el = document.createElement("div");
+          el.className = "cel-floaty";
+          if (Math.random() < .5) {
+            el.innerHTML = '<div class="balloon"></div>';
+            var c = colors[(Math.random() * colors.length) | 0];
+            el.style.color = c; el.firstChild.style.background = c;
+          } else {
+            el.innerHTML = '<div class="heart">' + glyphs[(Math.random() * glyphs.length) | 0] + "</div>";
+          }
+          el.style.left = (Math.random() * 94) + "vw";
+          el.style.animationDuration = (Math.random() * 3 + 4.5) + "s";
+          box.appendChild(el);
+          setTimeout(function () { el.remove(); }, 9000);
+        }, n * 160);
+      })(i);
+    }
+  }
+  function pinUnlock() {
+    pinUnlocked = true;
+    try { sessionStorage.setItem("kajalUnlocked", "1"); } catch (e) {}
+    document.getElementById("pinIco").textContent = "🔓";
+    pinError.textContent = "";
+    /* celebrate first — confetti, balloons, big birthday cheer — then open the gates */
+    pinLock.classList.add("celebrating");
+    document.getElementById("celebration").setAttribute("aria-hidden", "false");
+    document.body.classList.add("celebrating");
+    if (typeof burst === "function") burst();
+    if (typeof burstSide === "function") setTimeout(burstSide, 350);
+    spawnCelBalloons();
+    if (!reduced) {
+      [750, 1400, 2050].forEach(function (t, i) {
+        setTimeout(function () {
+          if (typeof burstAt === "function") burstAt(innerWidth * (i % 2 ? .78 : .22), innerHeight * .3);
+        }, t);
+      });
+    }
+    setTimeout(function () {
+      pinLock.classList.add("unlocked");
+      document.body.classList.remove("locked", "celebrating");
+      gate(false);
+      setTimeout(function () { if (pinLock.parentNode) pinLock.parentNode.removeChild(pinLock); }, 700);
+    }, reduced ? 700 : 3200);
+  }
+  function pinPress(digit) {
+    if (pinUnlocked || enteredPin.length >= 4) return;
+    enteredPin += digit;
+    pinError.textContent = "";
+    renderPinDots();
+    if (enteredPin.length === 4) {
+      if (enteredPin === CORRECT_PIN) { setTimeout(pinUnlock, 180); }
+      else { pinFail(); }
+    }
+  }
+  document.querySelectorAll("#pinPad .pin-key").forEach(function (key) {
+    key.addEventListener("click", function () {
+      if (key.getAttribute("data-digit") !== null) { pinPress(key.getAttribute("data-digit")); }
+      else if (key.getAttribute("data-action") === "clear") { enteredPin = ""; pinError.textContent = ""; renderPinDots(); }
+      else if (key.getAttribute("data-action") === "back") { enteredPin = enteredPin.slice(0, -1); renderPinDots(); }
+    });
+  });
+  document.addEventListener("keydown", function (e) {
+    if (pinUnlocked || !document.getElementById("pinLock")) return;
+    if (/^[0-9]$/.test(e.key)) { pinPress(e.key); }
+    else if (e.key === "Backspace") { enteredPin = enteredPin.slice(0, -1); renderPinDots(); }
+    else if (e.key === "Escape") { enteredPin = ""; renderPinDots(); }
+  });
+})();
 </script>
 </body>
 </html>
